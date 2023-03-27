@@ -1,0 +1,148 @@
+# Waveguide taper file
+
+#############################################################################
+## Part 1: sweep over waveguide taper shape
+clear;
+
+# run the sweep over taper width
+filename = "Waveguide-taper.lms";
+load(filename);
+sweepname="slope";
+runsweep(sweepname);
+
+# collect sweep results
+s_matrix = getsweepresult(sweepname,"s_param");
+usr_s_matrix = getattribute(s_matrix,"user s matrix");
+m = getparameter(s_matrix,"m");
+
+# calculate transmission
+s_21 = usr_s_matrix(2,1,1:length(m));
+trans = pinch(abs(s_21)^2);
+
+plot(m,trans,"m","T");
+
+ind = find(trans,max(trans));
+fom = m(ind); 
+
+#############################################################################
+## Part 2: export s-parameter for the optimized waveguide taper shape
+
+lambdac = 1.55e-6; # center wavelength for group delay calculations
+fc=c/lambdac;
+
+# port definitions for S-parameter files
+ports = cell(2);
+locations = cell(2);
+ports{1} = "in";
+ports{2} = "out";
+locations{1} = "LEFT";
+locations{2} = "RIGHT";
+
+name  = splitstring(filename,'.lms');
+name = name{1};
+txtfilename = name+"-s-params"+".txt"; #S-parameter file name
+if(fileexists(txtfilename)) { rm(txtfilename); }
+
+
+## Running simulations for TE and TM polarizations 
+
+###################################################
+#TE
+load(name+".lms");
+switchtolayout;
+save(name+"_TE.lms");
+setnamed("taper","m",fom);
+setnamed("EME","y min bc", "Anti-Symmetric"); #forces TE mode to be selected
+setnamed("EME","z min bc", "Symmetric"); #forces TE mode to be selected
+# Extract group delay at center wavelength
+setnamed("EME","wavelength",lambdac);
+run;
+setemeanalysis("calculate group delays",1);
+emepropagate;
+groupdelay_TE = getresult("EME","user group delay");
+# Run wavelength sweep to extract s parameters
+runsweep("wavelength_sweep");
+s_matrix_TE=getsweepresult("wavelength_sweep","s-matrix");
+
+###################################################
+#TM
+switchtolayout;
+setnamed("EME","y min bc", "Symmetric"); #forces TM mode to be selected
+setnamed("EME","z min bc", "Anti-Symmetric"); #forces TM mode to be selected
+save(name+"_TM.lms");
+setnamed("taper","m",fom);
+# Extract group delay at center wavelength
+setnamed("EME","wavelength",lambdac);
+run;
+setemeanalysis("calculate group delays",1);
+emepropagate;
+groupdelay_TM = getresult("EME","user group delay");
+# Run wavelength sweep to extract s parameters
+runsweep("wavelength_sweep");
+s_matrix_TM = getsweepresult("wavelength_sweep","s-matrix");
+
+###################################################
+# Write s-parameters with group delay corrections into s parameter phase
+
+# define mode number/ID
+for (mode_ID_num = 1:2){
+    if (mode_ID_num==1){
+        s_matrix = s_matrix_TE;
+        GD = groupdelay_TE;
+        mode_ID = "TE";
+    }else{
+        s_matrix = s_matrix_TM;
+        GD = groupdelay_TM;
+        mode_ID = "TM";
+    }
+    # extract s-parameters
+    spar = getattribute(s_matrix,"user s matrix");
+    wl = getparameter(s_matrix,"wavelength");
+    wl = transpose(wl);wl=flip(wl,1);f=c/wl;
+    
+    
+    S11=pinch(spar(1,1,1:length(wl)));
+    S12=pinch(spar(1,2,1:length(wl)));
+    
+    S21=pinch(spar(2,1,1:length(wl)));
+    S22=pinch(spar(2,2,1:length(wl)));
+  
+    S11=flip(S11,1);S12=flip(S12,1);
+    S21=flip(S21,1);S22=flip(S22,1);
+     
+    plot(wl/1e-6,abs(S21)^2,"wavelength (um)","T","Waveguide Taper -"+mode_ID,"color=red,linewidth=2");
+    plot(wl/1e-6,unwrap(angle(S21)),"wavelength (um)","(rad)","Waveguide Taper Phase -"+mode_ID,"color=red,linewidth=2");
+    
+    # write s-parameter file
+    ? "Writing " + name + ": "+mode_ID;
+    format short;
+    if (mode_ID_num==1){
+        for (i=1:2) {
+            write(txtfilename,'["'+ports{i}+'","'+locations{i}+'"]');
+        }
+    }
+    for (i=1:2) {
+        for (j=1:2) {
+            text='("';
+            text=text + ports{i} + '","' + mode_ID + '",'+ num2str(mode_ID_num)+',';
+            text=text + '"';
+            text=text + ports{j} + '",' + num2str(mode_ID_num)+ ',"transmission",';
+            text=text + num2str(GD(i,j))+')';
+            write(txtfilename,text);
+            matrix_size="("+num2str(length(wl))+",3)";
+            write(txtfilename,matrix_size);
+            name_s = "S"+num2str(i)+num2str(j);
+            #temp = "temp=[f, abs(" + name_s + "),unwrap(angle(" + name_s + "))];";
+            temp = "temp=[f, abs(" + name_s + "),unwrap(angle(" + name_s + "))-2*pi*GD(i,j)*(f-fc)];";
+            eval(temp);
+            format long;
+            write(txtfilename,num2str(temp));
+            format short;
+        }
+    }
+    
+}
+    
+
+
+
