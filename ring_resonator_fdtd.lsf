@@ -1,0 +1,18 @@
+#########################################################
+# file: ring_resonator_fdtd.lsf
+#
+# Description: This file calculates the results of 
+#          ring_resonator.fsp and saves them to and
+#          ldf file. The final resulats are plotted
+#          using ring_resonator.lsf
+#  
+# Copyright 2016, Lumerical Solutions, Inc.
+########################################################
+
+# collect data from port 2
+Tdrop_dataset = getresult("FDTD::ports::port 2","T");
+Tdrop_3DFDTD = abs(Tdrop_dataset.T);
+lambda_3DFDTD = Tdrop_dataset.lambda;
+
+# save data to ldf file
+savedata("fdtd_results.ldf",Tdrop_3DFDTD,lambda_3DFDTD);

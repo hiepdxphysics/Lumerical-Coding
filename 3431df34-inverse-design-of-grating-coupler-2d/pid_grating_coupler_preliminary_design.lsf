@@ -1,0 +1,47 @@
+## Calculate the optimal grating pitch from the effective
+## indices of the slab modes using the FDE solver in MODE.
+
+clear;
+load("pid_grating_coupler_preliminary_design");
+
+# ------------------
+# Design Parameters:
+# ------------------
+mode_num = 1; # TM
+theta_deg = 5.0;
+theta = theta_deg*pi/180;
+setanalysis('wavelength',1.55e-6);
+?lambda = getanalysis("wavelength");
+index_SiO2 = 1.44401;
+waveguide_thickness = 220e-9;
+etch = 80e-9;
+
+# -----------
+# Slab Modes:
+# -----------
+
+# slab mode on thinest part of the grating
+switchtolayout;
+setnamed("::model", "thickness", waveguide_thickness);
+setnamed("::model", "etch_depth", etch);
+findmodes;
+neff_thin = real(getresult("FDE::data::mode"+num2str(mode_num),"neff"));
+
+# slab mode on thickest part of the grating
+switchtolayout;
+setnamed("::model", "thickness", waveguide_thickness);
+setnamed("::model", "etch_depth", 0);
+findmodes; # first mode should be TEz slab mode confined to the grating
+neff_thick = real(getresult("FDE::data::mode"+num2str(mode_num),"neff"));
+
+# ---------------------------------
+# Grating Pitch Initial Parameters:
+# ---------------------------------
+F0 = 0.95;
+?x0 = -2.5;
+?R = 0.03;
+?a = neff_thin - index_SiO2*sin(theta);
+?b = neff_thick - neff_thin;
+
+initial_params = [ x0, R, a, b ];
+jsonsave("pid_grating_coupler_initial_params.json", initial_params);

@@ -1,0 +1,54 @@
+#########################################################
+# file: waveguide_couplers.lsf
+#
+# Description: This script file
+#   is used to show the image of light
+#   propagating in a waveguide coupler. Please
+#   open the file waveguide_couplers.lms
+#   before running the script.
+#
+# Copyright 2009, Lumerical Solutions, Inc.
+#########################################################
+
+# first, delete the right waveguide
+switchtolayout;
+setactivesolver("MODE");
+select("right");
+delete;
+
+# find modes of the single waveguide
+findmodes;
+cleardcard("E0");
+copydcard("mode1","E0");
+
+# add the second waveguide back
+switchtolayout;
+select("left");
+copy(0,0,0);
+set("y",-get("y"));
+set("name","right");
+
+# find the modes of the couple device
+findmodes;
+
+# choose vector of L
+L = linspace(0,40e-6,100);
+
+y = getdata("mode1","y");
+z = getdata("mode1","z");
+nmin = 2;
+nmax = 4;
+
+E2 = matrix(length(y),length(L));
+# loop over all lengths and use propagate command
+for(i=1:length(L)) {
+    outmode = propagate("E0",L(i),nmin,nmax);
+    E2_temp = getelectric(outmode);
+    cleardcard(outmode);
+    E2(1:length(y),i) = E2_temp(1,1:length(y),find(z,0.1e-6));
+}
+
+image(y*1e6,L*1e6,E2,"y (microns)","L (microns)","|E|^2 vs L");
+
+
+

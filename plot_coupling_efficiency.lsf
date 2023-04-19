@@ -1,0 +1,35 @@
+clear;
+closeall;
+
+load("optimized_grating_coupler_etch_0p8_bandwidth_40nm");
+run;
+fw_40 = getresult("fom_mode_exp","expansion for fom_mode_exp");
+bk_40 = getresult("back","T");
+
+load("optimized_grating_coupler_etch_0p8_bandwidth_100nm");
+run;
+fw_100 = getresult("fom_mode_exp","expansion for fom_mode_exp");
+bk_100 = getresult("back","T");
+
+load("optimized_grating_coupler_etch_0p8_bandwidth_120nm");
+run;
+fw_120 = getresult("fom_mode_exp","expansion for fom_mode_exp");
+bk_120 = getresult("back","T");
+
+plot(fw_40.lambda*1e9,
+     10*log10(abs(fw_40.T_backward)),
+     10*log10(abs(fw_100.T_backward)),
+     10*log10(abs(fw_120.T_backward)),
+     "wavelength (nm)","coupling efficiency (dB)","80% etch");
+holdon;
+plot(fw_40.lambda*1e9,
+     10*log10(abs(bk_40.T)),
+     10*log10(abs(bk_100.T)),
+     10*log10(abs(bk_120.T)),
+     "wavelength (nm)","coupling efficiency (dB)","80% etch","plot pen=--");
+holdoff;
+legend("40nm","100nm","120nm","40nm","100nm","120nm");
+setplot("x min",1475);
+setplot("x max",1625);
+setplot("y min",-15);
+setplot("y max",-2);

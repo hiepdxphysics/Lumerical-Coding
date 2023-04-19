@@ -1,0 +1,32 @@
+# add structure
+addrect;
+set('name','grating');
+set('x span',0.5e-6);
+set('y span',0.5e-6);
+set('index',3.4);
+
+
+# add simulation region
+addfdtd;
+set('dimension','2D');
+set('x span',1e-6);
+set('x min bc','Periodic');
+
+# add source
+addplane;
+set('y',-0.5e-6);
+set('center wavelength',1.55e-6);
+set('wavelength span',0.5e-6);
+
+# add monitor
+addpower;
+set('y',0.5e-6);
+setglobalmonitor('frequency points',100);
+
+
+# run simulation
+run;
+
+# get result and plot
+T=getresult('monitor','T');
+visualize(T);

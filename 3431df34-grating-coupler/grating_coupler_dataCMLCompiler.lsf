@@ -1,0 +1,17 @@
+###########################################################
+# Script file: grating_coupler_dataCMLCompiler.lsf
+#
+# Description: This file can be used to extract the S-parameters
+#	required by the CML Compiler to build a grating coupler
+#	element
+#
+# Copyright 2019, Lumerical Solutions, Inc.
+###########################################################
+
+###########################################################
+
+# run S-parameter sweep
+runsweep("S-parameters");
+
+# export S-parameter data for CML Compiler
+exportsweep("S-parameters","grating_coupler.dat");

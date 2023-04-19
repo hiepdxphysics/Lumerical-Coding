@@ -1,0 +1,77 @@
+##################################################################
+
+# Copyright (c) 2003-2020, Ansys, Inc. All rights reserved.  
+
+# Unauthorized use, distribution, or duplication is prohibited.  
+# This product is subject to U.S. laws governing export and re-export.  
+
+# For full Legal Notice, see documentation.
+
+##################################################################
+
+# Port names: We strongly recommend using the following port names.
+ports = cell(2);
+p = struct; p.name = "opt_1";    p.dir = "Bidirectional"; p.type = "Optical Signal";    p.pos = "Left";   p.loc = 0.5;  ports{1} = p;
+p = struct; p.name = "opt_2";    p.dir = "Bidirectional"; p.type = "Optical Signal";    p.pos = "Right";  p.loc = 0.5;  ports{2} = p;
+
+opt_1_RELAY = 1; # Optical 1
+opt_2_RELAY = 2; # Optical 2
+
+# Properties
+
+# General
+photonic_model = "spar_fixed"; # Photonic model used in the element.
+description = "Foundry grating coupler - TE";	# Please give a brief description, e.g., "Grating coupler for TE mode"
+prefix = "GC";
+
+
+# Thermal
+temperature = "%temperature%";	# Inherit from Root Element. Otherwise, provide the value in K. For example: temperature = 300;
+
+# CML
+
+# CML/notes		# Feel free to add notes as you see fit
+notes= cell(1);
+notes{1} = struct;
+notes{1}.property = "wavelength_range";
+notes{1}.value = "C-band (1530 - 1565 nm)";
+# notes{2} = struct; 		# Please follow the same syntax as notes{1}
+
+# Fixed internal properties (end user cannot see)
+mode_no = 1;		# This model supports 2 modes.
+mode_ID = 1;		# The mode IDs must be consistent across your CML
+mode_label = cell(mode_no);
+mode_label{1} = "TE";
+
+spar_filename = "gc_strip_te_c_S_params.txt"; #S-parameter for grating coupler
+
+digital_filter_type = 'FIR';  # 'FIR' filter type should be used where phase information is important
+                              # 'IIR' can be used in cases where phase is not important but transmission is freqeuncy dependent
+number_of_taps_estimation = "fit tolerance";
+fir_taps = 64; # Number of taps for finite impulse response filter.
+                # Larger number allows to resolve frequency dependence better but increases time delay.
+                # Suggestion: set to ~64 for devices where dispersive properties are important
+                # set to ~1 for devices that will be used in circuits where time delays are a concern
+iir_taps = 4; # Number of taps for infinite impulse response filter.
+                # For most cases the default number of taps (4) is sufficient.  In some cases it might be necessary to use a larger value
+passivity_enforcement = "ignore";
+reciprocity_enforcement = "ignore";
+
+# Testing parameters
+reference_data_available = true;
+
+min_wavelength = 1500e-9;
+max_wavelength = 1600e-9;
+number_wavelength_points = 1000;
+wavelength_tolerance_nm = 1e-5; #nm
+power_tolerance_dB = 1e-6; #dB
+S_regression_tolerance = 1e-5; # dimensionless looks at reference data |S-S_ref| in absolute terms, phase will matter!
+S_data_tolerance = 1e-4; # dimensionless looks at source data |S-S_data| in absolute terms, phase will matter!
+reciprocity_tolerance = 5e-2; # dimensionless
+passivity_tolerance = 1e-5; # dimensionless
+compare_time_abs_transmission = true;  # Set this to true when using multiple taps with s-parameter data with no angle variation to compare only the magnitude of transmission between time and frequency domain tests
+compare_time_bandwidth_fraction = 0.3; # fraction of bandwidth over which to compare time domain results to frequency domain
+S_time_tolerance = 0.025; # time domain difference with frequency domain over middle bandwidth
+
+custom_qa_filenames = cell(1); 
+custom_qa_filenames{1} = "grating_qa.lsf";

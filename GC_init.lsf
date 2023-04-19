@@ -9,8 +9,8 @@ etch_depth=0.07e-6;       # etch depth;
 thick_BOX=2e-6;           # thickness of the oxide cladding
 thick_Clad=2e-6;          # thickness of the cladding material
 Si_substrate=4e-6;        # thickness of the silicon substrate
-materials;                # creates a dispersive Si material model
-material='Si (Silicon) - Dispersive & Lossless';
+#materials;                # creates a dispersive Si material model
+material='Si (Silicon) - Palik';
 width_wg=0.5e-6;          # width of the waveguide
 
 # define input optical source parameters
